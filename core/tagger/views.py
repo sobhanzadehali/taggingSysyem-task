@@ -2,13 +2,21 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
 
 from .models import Dataset, Operator, HasPermission, Tag, Sentence, LabeledSentence
-from .serializers import LabeledSentenceSerializer, SentenceSerializer, TagSerializer
+from .serializers import LabeledSentenceSerializer, SentenceSerializer, TagSerializer, DatasetSerializer, \
+    HasPermissionSerializer
 
 
 # Create your views here.
+
+
+class DatasetViewSet(ModelViewSet):
+    serializer_class = DatasetSerializer
+    permission_classes = (IsAdminUser,)
+    queryset = Dataset.objects.all()
 
 
 class SentenceCategoryAPIView(APIView):
@@ -58,6 +66,20 @@ class TagAPIView(APIView):
         """
         user = request.user
 
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class PermissionAPIView(APIView):
+    serializer_class = HasPermissionSerializer
+    permission_classes = (IsAdminUser,)
+
+    def get(self,request):
+        serializer = self.serializer_class(HasPermission.objects.all(), many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
