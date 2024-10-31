@@ -3,6 +3,6 @@ from . import views
 
 
 urlpatterns = [
-    path('dataset/<int:dataset_id>/<int:tag_id>/', views.sentence_category, name='category'),
+    path('dataset/<int:dataset_id>/<int:tag_id>/', views.SentenceCategory.as_view(), name='category'),
     
 ]
