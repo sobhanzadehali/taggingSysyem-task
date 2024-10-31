@@ -1,0 +1,13 @@
+version: '3.4'
+
+services:
+  taggingsystem:
+    image: taggingsystem
+    build:
+      context: ./core
+      dockerfile: ./Dockerfile
+    ports:
+      - 8000:8000
+    volumes:
+      - ./code:/app
+    
