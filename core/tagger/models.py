@@ -5,6 +5,8 @@ from django.contrib.auth import get_user_model
 # Create your models here.
 
 User = get_user_model()
+
+
 class Dataset(models.Model):
     name = models.CharField(_("name"), max_length=255)
     description = models.TextField(_("description"))
@@ -14,14 +16,16 @@ class Dataset(models.Model):
 
 
 class Operator(models.Model):
-    user= models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
     def __str__(self):
         return self.user.username
-    
+
 
 class HasPermission(models.Model):
     dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE)
     operator = models.ForeignKey(Operator, on_delete=models.CASCADE)
+
     class Meta:
         verbose_name = "permission"
         verbose_name_plural = "permissions"
@@ -44,7 +48,6 @@ class Sentence(models.Model):
     body = models.TextField(_("body"))
 
     def __str__(self):
-
         return f"{self.body[:50]}..."
 
 
