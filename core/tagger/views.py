@@ -96,7 +96,7 @@ class SearchLabeledSentenceAPIView(APIView):
 
     def get(self, request, dataset_id):
         """
-        use ....?search="cheese" to search in dataset
+        
         """
         user = request.user
         q = request.GET.get('subject', None)
@@ -111,3 +111,5 @@ class SearchLabeledSentenceAPIView(APIView):
                                     'tag__name')).filter(search=q)
             serializer = self.serializer_class(items, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
