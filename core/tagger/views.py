@@ -1,9 +1,12 @@
+from re import search
+
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
+
+from django.contrib.postgres.search import SearchVector
 
 from .models import Dataset, Operator, HasPermission, Tag, Sentence, LabeledSentence
 from .serializers import LabeledSentenceSerializer, SentenceSerializer, TagSerializer, DatasetSerializer, \
@@ -71,11 +74,12 @@ class TagAPIView(APIView):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
 class PermissionAPIView(APIView):
     serializer_class = HasPermissionSerializer
     permission_classes = (IsAdminUser,)
 
-    def get(self,request):
+    def get(self, request):
         serializer = self.serializer_class(HasPermission.objects.all(), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -84,3 +88,26 @@ class PermissionAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class SearchLabeledSentenceAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = LabeledSentenceSerializer
+
+    def get(self, request, dataset_id):
+        """
+        use ....?search="cheese" to search in dataset
+        """
+        user = request.user
+        q = request.GET.get('subject', None)
+        operator = Operator.objects.get(user=user)
+        try:
+            is_allowed = HasPermission.objects.get(operator=operator, dataset__pk=dataset_id)
+        except HasPermission.DoesNotExist as e:
+            return Response({"detail": "you don't have permission"}, status=status.HTTP_400_BAD_REQUEST)
+        if q is not None and q != '':
+            items = LabeledSentence.objects.annotate(
+                search=SearchVector('sentence__body', 'sentence__dataset__name', 'sentence__dataset__description',
+                                    'tag__name')).filter(search=q)
+            serializer = self.serializer_class(items, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)

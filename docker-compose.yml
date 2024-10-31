@@ -3,11 +3,24 @@ version: '3.4'
 services:
   taggingsystem:
     image: taggingsystem
+    command: python manage.py runserver 0.0.0.0:8000
     build:
       context: ./core
       dockerfile: ./Dockerfile
     ports:
       - 8000:8000
+    env_file:
+      - ./core/.env
     volumes:
-      - ./code:/app
-    
+      - ./core:/app
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=hello_django
+      - POSTGRES_PASSWORD=hello_django
+      - POSTGRES_DB=hello_django_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+
+volumes:
+  postgres_data:

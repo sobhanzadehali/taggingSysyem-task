@@ -5,7 +5,7 @@ from .models import Dataset, Tag, Operator, HasPermission, Sentence, LabeledSent
 
 class DatasetSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = '__all__'
+        fields = ('name', 'description',)
         model = Dataset
 
 

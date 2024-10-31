@@ -44,7 +44,7 @@ class Tag(models.Model):
 
 
 class Sentence(models.Model):
-    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, blank=True, null=True)
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name='sentences', blank=True, null=True)
     body = models.TextField(_("body"))
 
     def __str__(self):
@@ -52,7 +52,7 @@ class Sentence(models.Model):
 
 
 class LabeledSentence(models.Model):
-    sentence = models.ForeignKey(Sentence, on_delete=models.CASCADE)
+    sentence = models.ForeignKey(Sentence, on_delete=models.CASCADE, related_name='labeled')
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     operator = models.ForeignKey(Operator, on_delete=models.CASCADE)
     created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
