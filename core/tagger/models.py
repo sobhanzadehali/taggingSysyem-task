@@ -51,6 +51,8 @@ class Sentence(models.Model):
 class LabeledSentence(models.Model):
     sentence = models.ForeignKey(Sentence, on_delete=models.CASCADE)
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+    operator = models.ForeignKey(Operator, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
 
     def __str__(self) -> str:
         return f"{self.sentence[:50]}, {self.tag[:50]}"
