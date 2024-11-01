@@ -1,8 +1,7 @@
-from re import search
-
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import  generics
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
 
@@ -34,7 +33,7 @@ class SentenceCategoryAPIView(APIView):
         operator = Operator.objects.get(user=user)
         try:
             is_allowed = HasPermission.objects.get(operator=operator, dataset__pk=dataset_id)
-        except HasPermission.DoesNotExist as e:
+        except HasPermission.DoesNotExist as _:
             return Response({"detail": "you don't have permission"}, status=status.HTTP_400_BAD_REQUEST)
         if is_allowed:
             labelled_sentences = LabeledSentence.objects.filter(sentence__dataset=dataset_id, tag__pk=tag_id)
@@ -51,13 +50,13 @@ class TagAPIView(APIView):
 
     def get(self, request, dataset_id):
         """
-        list all tages in a dataset if you have permission.
+        list all tags in a dataset if you have permission.
         """
         user = request.user
         operator = Operator.objects.get(user=user)
         try:
             is_allowed = HasPermission.objects.get(operator=operator, dataset__pk=dataset_id)
-        except HasPermission.DoesNotExist as e:
+        except HasPermission.DoesNotExist as _:
             return Response({"detail": "you don't have permission"}, status=status.HTTP_400_BAD_REQUEST)
         tags = Tag.objects.filter(dataset__pk=dataset_id, is_active=True)
         serializer = self.serializer_class(tags, many=True)
@@ -67,7 +66,6 @@ class TagAPIView(APIView):
         """
         create tag if you have permission.
         """
-        user = request.user
 
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -80,14 +78,27 @@ class PermissionAPIView(APIView):
     permission_classes = (IsAdminUser,)
 
     def get(self, request):
+        """
+        list of dataset permissions
+        """
         serializer = self.serializer_class(HasPermission.objects.all(), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
+        """
+        creating new dataset permission
+        """
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class PermissionUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = HasPermissionSerializer
+    permission_classes = (IsAdminUser,)
+    queryset = HasPermission.objects.all()
+
 
 
 class SearchLabeledSentenceAPIView(APIView):
@@ -105,7 +116,7 @@ class SearchLabeledSentenceAPIView(APIView):
         operator = Operator.objects.get(user=user)
         try:
             is_allowed = HasPermission.objects.get(operator=operator, dataset__pk=dataset_id)
-        except HasPermission.DoesNotExist as e:
+        except HasPermission.DoesNotExist as _:
             return Response({"detail": "you don't have permission"}, status=status.HTTP_400_BAD_REQUEST)
         if parameter is not None and parameter != '':
             items = LabeledSentence.objects.annotate(
