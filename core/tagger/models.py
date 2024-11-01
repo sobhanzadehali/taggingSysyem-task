@@ -58,4 +58,4 @@ class LabeledSentence(models.Model):
     created_at = models.DateTimeField(_("created_at"), auto_now_add=True)
 
     def __str__(self) -> str:
-        return self.sentence.__str__()
+        return f'{self.pk}'
