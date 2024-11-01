@@ -8,8 +8,8 @@ from rest_framework import status
 
 from django.contrib.postgres.search import SearchVector
 
-from .models import Dataset, Operator, HasPermission, Tag, Sentence, LabeledSentence
-from .serializers import LabeledSentenceSerializer, SentenceSerializer, TagSerializer, DatasetSerializer, \
+from .models import Dataset, Operator, HasPermission, Tag, LabeledSentence
+from .serializers import LabeledSentenceSerializer, TagSerializer, DatasetSerializer, \
     HasPermissionSerializer
 
 
@@ -94,21 +94,23 @@ class SearchLabeledSentenceAPIView(APIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = LabeledSentenceSerializer
 
-    def get(self, request, dataset_id):
+    def get(self, request, dataset_id, *args,**kwargs):
         """
-        
+        domain/api/{{dataset_id}}?word={{target_word_for_search}}
+        search in labeled text body, dataset, tag        
         """
         user = request.user
-        q = request.GET.get('subject', None)
+        parameter = request.query_params.get('word', None)
+
         operator = Operator.objects.get(user=user)
         try:
             is_allowed = HasPermission.objects.get(operator=operator, dataset__pk=dataset_id)
         except HasPermission.DoesNotExist as e:
             return Response({"detail": "you don't have permission"}, status=status.HTTP_400_BAD_REQUEST)
-        if q is not None and q != '':
+        if parameter is not None and parameter != '':
             items = LabeledSentence.objects.annotate(
                 search=SearchVector('sentence__body', 'sentence__dataset__name', 'sentence__dataset__description',
-                                    'tag__name')).filter(search=q)
+                                    'tag__name')).filter(search=parameter)
             serializer = self.serializer_class(items, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:

@@ -13,6 +13,6 @@ urlpatterns = [
     # admin gives permission to operator
     path('permission/', views.PermissionAPIView.as_view(), name='permission'),
     # search inside dataset
-    path('search/<int:dataset_id>/', views.SearchLabeledSentenceAPIView.as_view(), name='search'),
+    path('search/<int:dataset_id>', views.SearchLabeledSentenceAPIView.as_view(), name='search'),
 ]
 urlpatterns += router.urls
