@@ -20,6 +20,7 @@ urlpatterns = [
     path('label/', views.LabelingSentenceAPIView.as_view(), name='labeling'),
     # list and create Sentences
     path('dataset/<int:dataset_id>/sentence/', views.ListCreateSentencesAPIView.as_view(), name='list-create-sentence'),
-
+    # upload csv file to create sentences
+    path('sentence/csv/<int:dataset_id>/', views.SentenceCSVAPIView.as_view(), name='sentence-csv'),
 ]
 urlpatterns += router.urls

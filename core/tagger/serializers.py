@@ -38,3 +38,8 @@ class LabeledSentenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = LabeledSentence
         fields = '__all__'
+
+
+class SentenceCSVSerializer(serializers.Serializer):
+    file = serializers.FileField()
+

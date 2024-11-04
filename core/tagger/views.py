@@ -1,3 +1,5 @@
+import csv
+
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,7 +12,7 @@ from django.contrib.postgres.search import SearchVector
 
 from .models import Dataset, Operator, HasPermission, Tag, LabeledSentence, Sentence
 from .serializers import LabeledSentenceSerializer, TagSerializer, DatasetSerializer, \
-    HasPermissionSerializer, SentenceSerializer
+    HasPermissionSerializer, SentenceSerializer, SentenceCSVSerializer
 
 
 # Create your views here.
@@ -139,8 +141,8 @@ class LabelingSentenceAPIView(APIView):
 
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        t =  serializer.validated_data['tag']# Tag
-        s =  serializer.validated_data['sentence'] # sentence
+        t = serializer.validated_data['tag']  # Tag
+        s = serializer.validated_data['sentence']  # sentence
         same_dataset = t.dataset.pk == s.dataset.pk
 
         if same_dataset:
@@ -170,17 +172,38 @@ class ListCreateSentencesAPIView(APIView):
     serializer_class = SentenceSerializer
     permission_classes = (IsAdminUser,)
 
-    def get(self,request, dataset_id, *args, **kwargs):
+    def get(self, request, dataset_id, *args, **kwargs):
         sentences = Sentence.objects.filter(dataset__id=dataset_id)
         serializer = self.serializer_class(sentences, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    
+    def post(self, request, dataset_id, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class SentenceCSVAPIView(APIView):
+    serializer_class = SentenceCSVSerializer
+    permission_classes = (IsAdminUser,)
+
+    def get(self, request, *args, **kwargs):
+        return Response({'data': 'upload a sentence csv file.'})
 
     def post(self, request, dataset_id, *args, **kwargs):
-            serializer = self.serializer_class(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data,status=status.HTTP_201_CREATED)
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            file = serializer.validated_data['file']
+            dataset = Dataset.objects.get(pk=dataset_id)
+            decoded_file = file.read().decode('utf-8').splitlines()
+            reader = csv.reader(decoded_file)
+            sentences = []
+            for row in reader:
+                if row:
+                    sentence_body = row[0]
+                    sentences.append(Sentence(body=sentence_body, dataset=dataset))
 
-
+            Sentence.objects.bulk_create(sentences)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
