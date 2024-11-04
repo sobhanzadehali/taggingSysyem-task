@@ -18,6 +18,8 @@ urlpatterns = [
     path('search/<int:dataset_id>', views.SearchLabeledSentenceAPIView.as_view(), name='search'),
     # labeling sentence
     path('label/', views.LabelingSentenceAPIView.as_view(), name='labeling'),
+    # list and create Sentences
+    path('dataset/<int:dataset_id>/sentence/', views.ListCreateSentencesAPIView.as_view(), name='list-create-sentence'),
 
 ]
 urlpatterns += router.urls

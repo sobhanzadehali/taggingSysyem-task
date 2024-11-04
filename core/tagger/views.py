@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework import generics
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
+from rest_framework import generics
 
 from django.contrib.postgres.search import SearchVector
 
@@ -163,3 +164,23 @@ class LabelingSentenceAPIView(APIView):
 
         serializer = SentenceSerializer(sentences, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ListCreateSentencesAPIView(APIView):
+    serializer_class = SentenceSerializer
+    permission_classes = (IsAdminUser,)
+
+    def get(self,request, dataset_id, *args, **kwargs):
+        sentences = Sentence.objects.filter(dataset__id=dataset_id)
+        serializer = self.serializer_class(sentences, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    
+
+    def post(self, request, dataset_id, *args, **kwargs):
+            serializer = self.serializer_class(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data,status=status.HTTP_201_CREATED)
+
+
