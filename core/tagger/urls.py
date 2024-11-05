@@ -15,7 +15,7 @@ urlpatterns = [
     # update and delete permissions
     path('permission/<int:pk>/', views.PermissionUpdateDeleteView.as_view(), name='permission-detail'),
     # search inside dataset
-    path('search/<int:dataset_id>', views.SearchLabeledSentenceAPIView.as_view(), name='search'),
+    path('search/<int:dataset_id>/<str:word>/', views.SearchLabeledSentenceAPIView.as_view(), name='search'),
     # labeling sentence
     path('label/', views.LabelingSentenceAPIView.as_view(), name='labeling'),
     # list and create Sentences

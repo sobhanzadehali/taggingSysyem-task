@@ -19,6 +19,9 @@ from .serializers import LabeledSentenceSerializer, TagSerializer, DatasetSerial
 
 
 class DatasetViewSet(ModelViewSet):
+    """
+    dataset viewset for super user to manage dataset instances.
+    """
     serializer_class = DatasetSerializer
     permission_classes = (IsAdminUser,)
     queryset = Dataset.objects.all()
@@ -110,23 +113,22 @@ class SearchLabeledSentenceAPIView(APIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = LabeledSentenceSerializer
 
-    def get(self, request, dataset_id, *args, **kwargs):
+    def get(self, request, dataset_id, word, *args, **kwargs):
         """
-        domain/api/{{dataset_id}}?word={{target_word_for_search}}
-        search in labeled text body, dataset, tag
+        give it the word you want to search in labeled text body, dataset and tag
         """
         user = request.user
-        parameter = request.query_params.get('word', None)
+        word = word
 
         operator = Operator.objects.get(user=user)
         try:
             is_allowed = HasPermission.objects.get(operator=operator, dataset__pk=dataset_id)
         except HasPermission.DoesNotExist as _:
             return Response({"detail": "you don't have permission"}, status=status.HTTP_400_BAD_REQUEST)
-        if parameter is not None and parameter != '':
+        if word is not None and word != '':
             items = LabeledSentence.objects.annotate(
                 search=SearchVector('sentence__body', 'sentence__dataset__name', 'sentence__dataset__description',
-                                    'tag__name')).filter(search=parameter)
+                                    'tag__name')).filter(search=word)
             serializer = self.serializer_class(items, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
@@ -138,6 +140,9 @@ class LabelingSentenceAPIView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
+        """
+        you can label sentences with available tags for that dataset
+        """
 
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -158,6 +163,9 @@ class LabelingSentenceAPIView(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, *args, **kwargs):
+        """
+        list of not labeled sentence that user has permission to access for labeling.
+        """
         authorized_datasets = HasPermission.objects.filter(operator=Operator.objects.get(user=request.user))
         dataset_ids = list(authorized_datasets.values_list('dataset__pk', flat=True))
         labeled_sentences = LabeledSentence.objects.all()
@@ -173,11 +181,17 @@ class ListCreateSentencesAPIView(APIView):
     permission_classes = (IsAdminUser,)
 
     def get(self, request, dataset_id, *args, **kwargs):
+        """
+        list of sentences in given dataset
+        """
         sentences = Sentence.objects.filter(dataset__id=dataset_id)
         serializer = self.serializer_class(sentences, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, dataset_id, *args, **kwargs):
+        """
+        create sentence in specific dataset
+        """
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -192,6 +206,10 @@ class SentenceCSVAPIView(APIView):
         return Response({'data': 'upload a sentence csv file.'})
 
     def post(self, request, dataset_id, *args, **kwargs):
+        """
+        api for creating sentences with uploading a csv file of sentences.
+        only admin has access to it.
+        """
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             file = serializer.validated_data['file']
