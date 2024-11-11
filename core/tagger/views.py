@@ -1,9 +1,6 @@
-import csv
-
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import generics
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
 from rest_framework import generics
@@ -13,6 +10,7 @@ from django.contrib.postgres.search import SearchVector
 from .models import Dataset, Operator, HasPermission, Tag, LabeledSentence, Sentence
 from .serializers import LabeledSentenceSerializer, TagSerializer, DatasetSerializer, \
     HasPermissionSerializer, SentenceSerializer, SentenceCSVSerializer
+from .utils import read_sentences
 
 
 # Create your views here.
@@ -215,12 +213,7 @@ class SentenceCSVAPIView(APIView):
             file = serializer.validated_data['file']
             dataset = Dataset.objects.get(pk=dataset_id)
             decoded_file = file.read().decode('utf-8').splitlines()
-            reader = csv.reader(decoded_file)
-            sentences = []
-            for row in reader:
-                if row:
-                    sentence_body = row[0]
-                    sentences.append(Sentence(body=sentence_body, dataset=dataset))
+            sentences = read_sentences(dataset, decoded_file)
 
             Sentence.objects.bulk_create(sentences)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
